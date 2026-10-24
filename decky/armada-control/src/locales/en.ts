@@ -33,6 +33,7 @@ export const en = {
   "options.steamDeck": "Steam Deck",
   "options.xbox360": "Xbox 360",
   "options.dualSense": "DualSense",
+  "options.dualSenseEdge": "DualSense Edge",
   "options.powersave": "Powersave",
   "games.appFallback": "App {id}",
   "power.editProfile": "EDIT POWER PROFILE",

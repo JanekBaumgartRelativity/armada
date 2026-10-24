@@ -28,7 +28,7 @@ ABL_PARTITIONS = (
 )
 MAX_REQUEST = 1024 * 1024
 CLIENT_TIMEOUT = 5
-CONTROLLER_TYPES = {"deck-uhid", "xbox-series", "xb360", "ds5"}
+CONTROLLER_TYPES = {"deck-uhid", "xbox-series", "xb360", "ds5", "ds5-edge"}
 INTERCEPT_MODES = {"overlay", "reset"}
 SWIPE_GESTURES_CONFIG = Path("/etc/armada/swipe-gestures.conf")
 GYRO_CONFIG = Path("/etc/armada/gyro.conf")
