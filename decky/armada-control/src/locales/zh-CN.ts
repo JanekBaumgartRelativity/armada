@@ -35,6 +35,7 @@ export const zhCN = {
   "options.steamDeck": "Steam Deck",
   "options.xbox360": "Xbox 360",
   "options.dualSense": "DualSense",
+  "options.dualSenseEdge": "DualSense Edge",
   "options.powersave": "节能",
   "games.appFallback": "应用 {id}",
   "power.editProfile": "编辑功耗方案",

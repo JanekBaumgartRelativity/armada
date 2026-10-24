@@ -35,6 +35,7 @@ export const ptBR = {
   "options.steamDeck": "Steam Deck",
   "options.xbox360": "Xbox 360",
   "options.dualSense": "DualSense",
+  "options.dualSenseEdge": "DualSense Edge",
   "options.powersave": "powersave",
   "games.appFallback": "App {id}",
   "power.editProfile": "EDITAR PERFIL DE DESEMPENHO",

@@ -15,6 +15,7 @@ CONTROLLER_TYPES = {
     "xbox-series": "Xbox Series",
     "xb360": "Xbox 360",
     "ds5": "DualSense",
+    "ds5-edge": "DualSense Edge",
 }
 
 
