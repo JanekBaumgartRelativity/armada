@@ -43,7 +43,8 @@ printf '%s\n' "$!" >"$tmp/steam.pid"
 follow() {
     rm -f "$tmp/steam.log"
     env PATH="$tmp/bin:$PATH" TEST_DIR="$tmp" ARMADA_GDBUS="$tmp/bin/gdbus" ARMADA_STEAM="$tmp/bin/steam" \
-        ARMADA_KEYBOARD_MOUSE="$tmp/bin/keyboard-mouse" ARMADA_STEAM_PID="$tmp/steam.pid" "$@" "$FOLLOW"
+        ARMADA_KEYBOARD_MOUSE="$tmp/bin/keyboard-mouse" ARMADA_STEAM_PID="$tmp/steam.pid" \
+        ARMADA_STEAM_KEYBOARD_CLOSED="$tmp/closed" "$@" "$FOLLOW"
 }
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
@@ -60,6 +61,13 @@ follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desk
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
     TEST_STATES="true false" ARMADA_STEAM_PID="$tmp/missing.pid"
 [[ "$(<"$tmp/steam.log")" == 'mouse off' ]] || fail "started Steam to open its keyboard: $(<"$tmp/steam.log")"
+
+# Closed from outside (steam-keyboard-outside), then focus hops to another field: open again.
+touch "$tmp/closed"
+follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
+    ARMADA_CLOSE_DELAY=1 TEST_STATES="true false true"
+[[ "$(<"$tmp/steam.log")" == $'steam://open/keyboard\nmouse on\nmouse off' && ! -e "$tmp/closed" ]] \
+    || fail "did not reopen after an outside close: $(<"$tmp/steam.log")"
 
 # Plasma Mobile keeps its own keyboard.
 follow XDG_CONFIG_DIRS=/etc/xdg TEST_STATES="true"

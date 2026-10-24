@@ -173,6 +173,10 @@ if [[ "$surface" == nested ]]; then
         export XDG_CONFIG_DIRS="/usr/share/armada/plasma/desktop:$XDG_CONFIG_DIRS"
         kwin_args=(--inputmethod /usr/bin/plasma-keyboard)
         steam_keyboard=("$child_env /usr/libexec/armada/steam-keyboard-follow")
+        # Gamescope gives Steam's overlay every tap while its keyboard is up.
+        # Its children get KWin's own Xwayland; the helper also needs gamescope's, which hosts KWin.
+        host_xauthority=${XAUTHORITY-}
+        steam_keyboard+=("$child_env ARMADA_HOST_DISPLAY=${DISPLAY@Q} ARMADA_HOST_XAUTHORITY=${host_xauthority@Q} /usr/libexec/armada/steam-keyboard-outside")
     fi
     if [[ ! -e "$kwin_home/kwinoutputconfig.json" ]]; then
         first_run=("/usr/bin/kscreen-doctor output.X11-0.scale.1.5")

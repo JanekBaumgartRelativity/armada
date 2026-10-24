@@ -205,6 +205,7 @@ expect_args \
     --exit-with-session "$child_env /usr/bin/plasmashell" \
     "$child_env /usr/libexec/kf6/polkit-kde-authentication-agent-1" \
     "$child_env /usr/libexec/armada/steam-keyboard-follow" \
+    "$child_env ARMADA_HOST_DISPLAY=':7' ARMADA_HOST_XAUTHORITY='' /usr/libexec/armada/steam-keyboard-outside" \
     '/usr/bin/kscreen-doctor output.X11-0.scale.1.5'
 nested_id="$(envval ARMADA_PLASMA_NESTED)"
 [[ "$nested_id" =~ ^[0-9]+$ ]]
@@ -230,7 +231,7 @@ expect_args \
 printf 'saved layout\n' >"$kwin/kwinoutputconfig.json"
 session "$home" nested desktop
 args
-[[ "${#actual[@]}" == 17 && "${actual[14]}" == "$child_env /usr/bin/plasmashell" ]]
+[[ "${#actual[@]}" == 18 && "${actual[14]}" == "$child_env /usr/bin/plasmashell" ]]
 [[ "${actual[16]}" == "$child_env /usr/libexec/armada/steam-keyboard-follow" ]]
 
 home="$tmp/default-cache-config"
