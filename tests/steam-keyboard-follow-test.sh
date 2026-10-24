@@ -32,6 +32,7 @@ printf '%s\n' \
     'fi' \
     >"$tmp/bin/gdbus"
 printf '%s\n' '#!/usr/bin/env bash' 'printf "%s\n" "$*" >>"$TEST_DIR/steam.log"' >"$tmp/bin/steam"
+printf '%s\n' '#!/usr/bin/env bash' 'printf "mouse %s\n" "$*" >>"$TEST_DIR/steam.log"' >"$tmp/bin/keyboard-mouse"
 chmod +x "$tmp/bin"/*
 # A process named steam stands in for the client.
 mkdir "$tmp/client"
@@ -42,22 +43,23 @@ printf '%s\n' "$!" >"$tmp/steam.pid"
 follow() {
     rm -f "$tmp/steam.log"
     env PATH="$tmp/bin:$PATH" TEST_DIR="$tmp" ARMADA_GDBUS="$tmp/bin/gdbus" ARMADA_STEAM="$tmp/bin/steam" \
-        ARMADA_STEAM_PID="$tmp/steam.pid" "$@" "$FOLLOW"
+        ARMADA_KEYBOARD_MOUSE="$tmp/bin/keyboard-mouse" ARMADA_STEAM_PID="$tmp/steam.pid" "$@" "$FOLLOW"
 }
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
     ARMADA_CLOSE_DELAY=0.1 TEST_STATES="true true false false true"
-[[ "$(<"$tmp/steam.log")" == $'steam://open/keyboard\nsteam://close/keyboard\nsteam://open/keyboard' ]] \
+# The right stick is the mouse only while the keyboard is open, and never after exit.
+[[ "$(<"$tmp/steam.log")" == $'steam://open/keyboard\nmouse on\nmouse off\nsteam://close/keyboard\nsteam://open/keyboard\nmouse on\nmouse off' ]] \
     || fail "unexpected Steam calls: $(<"$tmp/steam.log")"
 
 # Clicking into another field must not close and reopen the keyboard.
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
     ARMADA_CLOSE_DELAY=1 TEST_STATES="true false true"
-[[ "$(<"$tmp/steam.log")" == 'steam://open/keyboard' ]] || fail "focus blip reopened the keyboard: $(<"$tmp/steam.log")"
+[[ "$(<"$tmp/steam.log")" == $'steam://open/keyboard\nmouse on\nmouse off' ]] || fail "focus blip reopened the keyboard: $(<"$tmp/steam.log")"
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
     TEST_STATES="true false" ARMADA_STEAM_PID="$tmp/missing.pid"
-[[ ! -e "$tmp/steam.log" ]] || fail "started Steam to open its keyboard"
+[[ "$(<"$tmp/steam.log")" == 'mouse off' ]] || fail "started Steam to open its keyboard: $(<"$tmp/steam.log")"
 
 # Plasma Mobile keeps its own keyboard.
 follow XDG_CONFIG_DIRS=/etc/xdg TEST_STATES="true"
