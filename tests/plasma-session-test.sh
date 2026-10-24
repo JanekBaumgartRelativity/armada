@@ -31,6 +31,7 @@ grep -qx 'exec /usr/libexec/armada/armada-plasma-session nested' "$ROOT/system_f
 [[ "$(<"$ROOT/system_files/usr/share/armada/plasma/nested/kwinrc")" == $'[Wayland]\nVirtualKeyboardMode=2' ]]
 grep -qx 'XwaylandEisNoPromptApps=steam' "$ROOT/system_files/etc/xdg/kwinrc"
 grep -qx 'VirtualKeyboardMode=0' "$ROOT/system_files/usr/share/armada/plasma/desktop/kwinrc"
+grep -qx 'touchpointsEnabled=true' "$ROOT/system_files/usr/share/armada/plasma/desktop/kwinrc"
 grep -qx 'Exec=/usr/bin/steam -silent' "$ROOT/system_files/etc/xdg/autostart/armada-steam-desktop.desktop"
 grep -qx 'OnlyShowIn=KDE;' "$ROOT/system_files/etc/xdg/autostart/armada-steam-desktop.desktop"
 
