@@ -204,13 +204,15 @@ expect_args \
     --inputmethod /usr/bin/plasma-keyboard \
     --exit-with-session "$child_env /usr/bin/plasmashell" \
     "$child_env /usr/libexec/kf6/polkit-kde-authentication-agent-1" \
+    "$child_env /usr/libexec/armada/steam-keyboard-follow" \
     '/usr/bin/kscreen-doctor output.X11-0.scale.1.5'
 nested_id="$(envval ARMADA_PLASMA_NESTED)"
 [[ "$nested_id" =~ ^[0-9]+$ ]]
 [[ "$(<"$log")" == "systemctl --user is-active --quiet armada-plasma-nested-*.service
 systemd-run --user --quiet --collect --unit=armada-plasma-nested-$nested_id $SESSION --restore-bottom $nested_id
 systemctl --user stop armada-bottom-screen.service" ]] || fail "unexpected handoff: $(<"$log")"
-[[ "$(envval XDG_CONFIG_DIRS)" == /usr/share/armada/plasma/nested:/etc/xdg ]]
+# Game Mode's Steam keyboard replaces Plasma's in the nested desktop shell, as in the standalone one.
+[[ "$(envval XDG_CONFIG_DIRS)" == /usr/share/armada/plasma/desktop:/usr/share/armada/plasma/nested:/etc/xdg ]]
 ! grep -q '^QT_QPA_PLATFORM=\|^SteamAppId=' "$tmp/env"
 for file in kwinrc kwinrulesrc kdeglobals kxkbrc kcminputrc kglobalshortcutsrc; do
     [[ "$(readlink "$kwin/$file")" == "../../../$file" ]]
@@ -228,7 +230,8 @@ expect_args \
 printf 'saved layout\n' >"$kwin/kwinoutputconfig.json"
 session "$home" nested desktop
 args
-[[ "${#actual[@]}" == 16 && "${actual[14]}" == "$child_env /usr/bin/plasmashell" ]]
+[[ "${#actual[@]}" == 17 && "${actual[14]}" == "$child_env /usr/bin/plasmashell" ]]
+[[ "${actual[16]}" == "$child_env /usr/libexec/armada/steam-keyboard-follow" ]]
 
 home="$tmp/default-cache-config"
 cache=()
