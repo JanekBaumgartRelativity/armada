@@ -5,6 +5,7 @@ set -euo pipefail
 
 steam=${ARMADA_STEAM:-/usr/bin/steam}
 gdbus=${ARMADA_GDBUS:-/usr/bin/gdbus}
+steam_pid=${ARMADA_STEAM_PID:-$HOME/.steam/steam.pid}
 bus=(--session --dest org.kde.KWin --object-path /VirtualKeyboard)
 
 active() {
@@ -12,29 +13,29 @@ active() {
         org.kde.kwin.VirtualKeyboard active 2>/dev/null
 }
 
+# Without a running Steam the URL would start a visible client.
+steam_running() {
+    local pid
+    [[ -r "$steam_pid" ]] || return 1
+    pid=$(<"$steam_pid")
+    [[ "$(</proc/"$pid"/comm)" == steam ]] 2>/dev/null
+}
+
 follow() {
-    local shown=0 want
+    local shown=0
     while read -r line; do
         [[ "$line" == *activeChanged* ]] || continue
-        # Clicking into or between fields drops focus for an instant; reopening costs Steam a second or two.
-        sleep 0.2
-        case "$(active)" in
-            *true*) want=1 ;;
-            *) want=0 ;;
-        esac
-        if [[ "$want" == 0 && "$shown" == 1 ]]; then
-            sleep "${ARMADA_CLOSE_DELAY:-0.3}"
-            [[ "$(active)" != *true* ]] || continue
-        fi
-        [[ "$want" != "$shown" ]] || continue
-        # Without a running Steam the URL would start a visible client.
-        pgrep -u "$UID" -x steam >/dev/null || continue
-        if [[ "$want" == 1 ]]; then
+        if [[ "$(active)" == *true* ]]; then
+            [[ "$shown" == 0 ]] && steam_running || continue
             "$steam" steam://open/keyboard >/dev/null 2>&1 || true
-        else
+            shown=1
+        elif [[ "$shown" == 1 ]]; then
+            # Clicking into or between fields drops focus for an instant; reopening costs Steam a second or two.
+            sleep "${ARMADA_CLOSE_DELAY:-0.5}"
+            [[ "$(active)" != *true* ]] || continue
             "$steam" steam://close/keyboard >/dev/null 2>&1 || true
+            shown=0
         fi
-        shown=$want
     done
 }
 

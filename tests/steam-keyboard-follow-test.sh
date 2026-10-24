@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 FOLLOW="$ROOT/system_files/usr/libexec/armada/steam-keyboard-follow"
 tmp="$(mktemp -d)"
-trap 'rm -rf -- "$tmp"' EXIT
+trap 'kill $(jobs -p) 2>/dev/null || true; rm -rf -- "$tmp"' EXIT
 
 fail() {
     printf '%s\n' "$1" >&2
@@ -32,13 +32,17 @@ printf '%s\n' \
     'fi' \
     >"$tmp/bin/gdbus"
 printf '%s\n' '#!/usr/bin/env bash' 'printf "%s\n" "$*" >>"$TEST_DIR/steam.log"' >"$tmp/bin/steam"
-printf '%s\n' '#!/usr/bin/env bash' '[[ "${TEST_STEAM_RUNNING:-1}" == 1 ]]' >"$tmp/bin/pgrep"
 chmod +x "$tmp/bin"/*
+# A process named steam stands in for the client.
+mkdir "$tmp/client"
+cp "$(command -v sleep)" "$tmp/client/steam"
+"$tmp/client/steam" 60 &
+printf '%s\n' "$!" >"$tmp/steam.pid"
 
 follow() {
     rm -f "$tmp/steam.log"
     env PATH="$tmp/bin:$PATH" TEST_DIR="$tmp" ARMADA_GDBUS="$tmp/bin/gdbus" ARMADA_STEAM="$tmp/bin/steam" \
-        "$@" "$FOLLOW"
+        ARMADA_STEAM_PID="$tmp/steam.pid" "$@" "$FOLLOW"
 }
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
@@ -52,7 +56,7 @@ follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desk
 [[ "$(<"$tmp/steam.log")" == 'steam://open/keyboard' ]] || fail "focus blip reopened the keyboard: $(<"$tmp/steam.log")"
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
-    TEST_STATES="true false" TEST_STEAM_RUNNING=0
+    TEST_STATES="true false" ARMADA_STEAM_PID="$tmp/missing.pid"
 [[ ! -e "$tmp/steam.log" ]] || fail "started Steam to open its keyboard"
 
 # Plasma Mobile keeps its own keyboard.
