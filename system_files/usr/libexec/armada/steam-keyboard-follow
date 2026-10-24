@@ -1,0 +1,40 @@
+#!/usr/bin/bash
+# Opens Steam's keyboard while a text field has focus. KWin still reports
+# focus with its own keyboard set to never show.
+set -euo pipefail
+
+steam=${ARMADA_STEAM:-/usr/bin/steam}
+gdbus=${ARMADA_GDBUS:-/usr/bin/gdbus}
+bus=(--session --dest org.kde.KWin --object-path /VirtualKeyboard)
+
+active() {
+    "$gdbus" call "${bus[@]}" --method org.freedesktop.DBus.Properties.Get \
+        org.kde.kwin.VirtualKeyboard active 2>/dev/null
+}
+
+follow() {
+    local shown=0 want
+    while read -r line; do
+        [[ "$line" == *activeChanged* ]] || continue
+        # Focus moving between fields deactivates for an instant.
+        sleep 0.2
+        case "$(active)" in
+            *true*) want=1 ;;
+            *) want=0 ;;
+        esac
+        [[ "$want" != "$shown" ]] || continue
+        # Without a running Steam the URL would start a visible client.
+        pgrep -u "$UID" -x steam >/dev/null || continue
+        if [[ "$want" == 1 ]]; then
+            "$steam" steam://open/keyboard >/dev/null 2>&1 || true
+        else
+            "$steam" steam://close/keyboard >/dev/null 2>&1 || true
+        fi
+        shown=$want
+    done
+}
+
+# Plasma Mobile keeps its own keyboard; only the desktop shell hides it.
+[[ ":${XDG_CONFIG_DIRS:-}:" == *:/usr/share/armada/plasma/desktop:* ]] || exit 0
+
+"$gdbus" monitor "${bus[@]}" | follow
