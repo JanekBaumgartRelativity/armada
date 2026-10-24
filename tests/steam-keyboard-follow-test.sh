@@ -42,9 +42,14 @@ follow() {
 }
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
-    TEST_STATES="true true false false true"
+    ARMADA_CLOSE_DELAY=0.1 TEST_STATES="true true false false true"
 [[ "$(<"$tmp/steam.log")" == $'steam://open/keyboard\nsteam://close/keyboard\nsteam://open/keyboard' ]] \
     || fail "unexpected Steam calls: $(<"$tmp/steam.log")"
+
+# Clicking into another field must not close and reopen the keyboard.
+follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
+    ARMADA_CLOSE_DELAY=1 TEST_STATES="true false true"
+[[ "$(<"$tmp/steam.log")" == 'steam://open/keyboard' ]] || fail "focus blip reopened the keyboard: $(<"$tmp/steam.log")"
 
 follow XDG_CONFIG_DIRS=/home/u/.config/kdedefaults:/usr/share/armada/plasma/desktop:/etc/xdg \
     TEST_STATES="true false" TEST_STEAM_RUNNING=0

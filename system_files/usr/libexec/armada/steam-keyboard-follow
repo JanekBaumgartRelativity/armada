@@ -16,12 +16,16 @@ follow() {
     local shown=0 want
     while read -r line; do
         [[ "$line" == *activeChanged* ]] || continue
-        # Focus moving between fields deactivates for an instant.
+        # Clicking into or between fields drops focus for an instant; reopening costs Steam a second or two.
         sleep 0.2
         case "$(active)" in
             *true*) want=1 ;;
             *) want=0 ;;
         esac
+        if [[ "$want" == 0 && "$shown" == 1 ]]; then
+            sleep "${ARMADA_CLOSE_DELAY:-0.3}"
+            [[ "$(active)" != *true* ]] || continue
+        fi
         [[ "$want" != "$shown" ]] || continue
         # Without a running Steam the URL would start a visible client.
         pgrep -u "$UID" -x steam >/dev/null || continue
