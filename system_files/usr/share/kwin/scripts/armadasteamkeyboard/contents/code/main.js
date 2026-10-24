@@ -23,3 +23,15 @@ function track(window) {
 
 workspace.windowList().forEach(track);
 workspace.windowAdded.connect(track);
+
+// Clicking a key would focus the keyboard itself, taking text focus away from the field being typed into.
+let typingWindow = workspace.activeWindow;
+workspace.windowActivated.connect((window) => {
+    if (window && isSteamKeyboard(window)) {
+        if (typingWindow && !typingWindow.deleted) {
+            workspace.activeWindow = typingWindow;
+        }
+        return;
+    }
+    typingWindow = window;
+});
