@@ -30,8 +30,8 @@ follow() {
             "$steam" steam://open/keyboard >/dev/null 2>&1 || true
             shown=1
         elif [[ "$shown" == 1 ]]; then
-            # Clicking into or between fields drops focus for an instant; reopening costs Steam a second or two.
-            sleep "${ARMADA_CLOSE_DELAY:-0.5}"
+            # Moving between fields drops focus for an instant; reopening costs Steam half a second.
+            sleep "${ARMADA_CLOSE_DELAY:-0.15}"
             [[ "$(active)" != *true* ]] || continue
             "$steam" steam://close/keyboard >/dev/null 2>&1 || true
             shown=0
