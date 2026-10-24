@@ -27,6 +27,7 @@ Patch10:        0010-fix-ssc-drain-glib-main-context.patch
 Patch11:        0011-fix-ssc-keep-retrying-until-the-SSC-answers.patch
 Patch12:        0012-fix-ssc-load-libssc-by-its-versioned-soname.patch
 Patch13:        0013-feat-ssc-open-the-sensors-at-200-Hz.patch
+Patch14:        0014-feat-dualsense-put-Paddle1-on-the-Edge-paddles-without-Paddle2.patch
 
 BuildRequires:  cargo
 BuildRequires:  rust

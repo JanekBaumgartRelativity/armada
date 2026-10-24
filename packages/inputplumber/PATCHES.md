@@ -29,3 +29,5 @@ to a commit, or `armada` if it's original; a URL source with no `notes` is verba
   source: armada
 - `patches/0013-feat-ssc-open-the-sensors-at-200-Hz.patch`
   source: armada
+- `patches/0014-feat-dualsense-put-Paddle1-on-the-Edge-paddles-without-Paddle2.patch`
+  source: armada

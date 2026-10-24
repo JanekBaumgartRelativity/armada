@@ -1,0 +1,96 @@
+From: Armada <noreply@armada.local>
+Subject: [PATCH] feat(dualsense): put Paddle1 on the Edge back paddles when
+ there is no Paddle2
+
+The Edge target maps LeftPaddle1/RightPaddle1 to the Fn buttons and
+LeftPaddle2/RightPaddle2 to the back paddles. Handhelds with a single pair of
+back buttons send them as Paddle1, so on the Edge they landed on Fn. Put
+Paddle1 on the paddles until the source advertises Paddle2 or sends a Paddle2
+event, then fall back to the existing mapping.
+
+--- a/src/input/target/dualsense.rs
++++ b/src/input/target/dualsense.rs
+@@ -116,6 +116,10 @@
+     last_written: Option<Vec<u8>>,
+     /// Whether a consumer has the device open, writes are skipped while closed.
+     is_open: bool,
++    /// Edge only: put LeftPaddle1/RightPaddle1 on the back paddles instead of
++    /// the Fn buttons. Most handhelds have one pair of back buttons and send
++    /// them as Paddle1; cleared once the source shows it has Paddle2 as well.
++    paddle1_on_paddles: bool,
+ }
+ 
+ impl DualSenseDevice {
+@@ -128,6 +132,7 @@
+             sensor_timestamp_start: Instant::now(),
+             context: Default::default(),
+             hardware,
++            paddle1_on_paddles: true,
+             queued_events: Vec::new(),
+             last_written: None,
+             is_open: false,
+@@ -217,7 +222,24 @@
+     fn update_state(&mut self, event: NativeEvent) {
+         let value = event.get_value();
+         let capability = event.as_capability();
++        let has_paddle2 = matches!(
++            capability,
++            Capability::Gamepad(Gamepad::Button(
++                GamepadButton::LeftPaddle2 | GamepadButton::RightPaddle2
++            ))
++        );
++        let switch_back = has_paddle2 && self.paddle1_on_paddles;
++        if has_paddle2 {
++            self.paddle1_on_paddles = false;
++        }
++        let paddle1_on_paddles =
++            self.paddle1_on_paddles && self.hardware.model == ModelType::Edge;
+         let state = self.state.state_mut();
++        if switch_back {
++            // Drop paddles a Paddle1 press may still be holding.
++            state.left_paddle = false;
++            state.right_paddle = false;
++        }
+         match capability {
+             Capability::Gamepad(gamepad) => match gamepad {
+                 Gamepad::Button(btn) => match btn {
+@@ -423,12 +445,18 @@
+                     },
+                     GamepadButton::LeftBumper => state.l1 = event.pressed(),
+                     GamepadButton::LeftTrigger => state.l2 = event.pressed(),
++                    GamepadButton::LeftPaddle1 if paddle1_on_paddles => {
++                        state.left_paddle = event.pressed()
++                    }
+                     GamepadButton::LeftPaddle1 => state.left_fn = event.pressed(),
+                     GamepadButton::LeftPaddle2 => state.left_paddle = event.pressed(),
+                     GamepadButton::LeftStick => state.l3 = event.pressed(),
+                     GamepadButton::LeftStickTouch => (),
+                     GamepadButton::RightBumper => state.r1 = event.pressed(),
+                     GamepadButton::RightTrigger => state.r2 = event.pressed(),
++                    GamepadButton::RightPaddle1 if paddle1_on_paddles => {
++                        state.right_paddle = event.pressed()
++                    }
+                     GamepadButton::RightPaddle1 => state.right_fn = event.pressed(),
+                     GamepadButton::RightPaddle2 => state.right_paddle = event.pressed(),
+                     GamepadButton::RightStick => state.r3 = event.pressed(),
+@@ -965,6 +993,20 @@
+             return None;
+         }
+         Some(ready)
++    }
++
++    fn on_capabilities_changed(
++        &mut self,
++        capabilities: std::collections::HashSet<Capability>,
++    ) -> Result<(), InputError> {
++        let paddle2 = [GamepadButton::LeftPaddle2, GamepadButton::RightPaddle2];
++        if paddle2
++            .into_iter()
++            .any(|button| capabilities.contains(&Capability::Gamepad(Gamepad::Button(button))))
++        {
++            self.paddle1_on_paddles = false;
++        }
++        Ok(())
+     }
+ 
+     fn stop(&mut self) -> Result<(), InputError> {
